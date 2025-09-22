@@ -61,9 +61,26 @@ export class UIManager {
 
   // Aggiungi suono al mixer
   addToMixer(soundPath) {
-    const track = this.mixerController.addTrack(soundPath);
-    if (!track) return; // Già presente
+    console.log('addToMixer called for:', soundPath);
+    let track = this.mixerController.getTrack(soundPath);
+    console.log('existing track?', !!track);
+    if (!track) {
+      track = this.mixerController.addTrack(soundPath);
+      console.log('added new track?', !!track);
+    }
+    if (!track) {
+      console.log('failed to add track');
+      return; // Non riuscito ad aggiungere
+    }
 
+    const uiExists = document.querySelector(`#tracks [data-path="${soundPath}"]`);
+    console.log('UI already exists?', !!uiExists);
+    if (uiExists) {
+      console.log('UI already in mixer, returning');
+      return; // Già presente nell'UI
+    }
+
+    console.log('creating UI for track');
     const trackEl = document.createElement('div');
     trackEl.className = 'track';
     trackEl.dataset.path = soundPath;
@@ -90,25 +107,7 @@ export class UIManager {
             <input type="range" min="-1" max="1" step="0.01" value="0" class="pan-slider">
           </div>
         </div>
-        <div class="control-row">
-          <div class="control-group">
-            <label>🎛️ Equalizer</label>
-            <div class="eq-controls">
-              <div class="eq-slider">
-                <span>L</span>
-                <input type="range" min="-20" max="20" step="1" value="0" class="eq-low-slider" title="Low frequencies">
-              </div>
-              <div class="eq-slider">
-                <span>M</span>
-                <input type="range" min="-20" max="20" step="1" value="0" class="eq-mid-slider" title="Mid frequencies">
-              </div>
-              <div class="eq-slider">
-                <span>H</span>
-                <input type="range" min="-20" max="20" step="1" value="0" class="eq-high-slider" title="High frequencies">
-              </div>
-            </div>
-          </div>
-        </div>
+
         <div class="control-row">
           <div class="control-group">
             <label>
@@ -149,14 +148,16 @@ export class UIManager {
       </div>
     `;
 
-    document.getElementById('tracks').appendChild(trackEl);
+    console.log('appending trackEl to #tracks');
+    const tracksEl = document.getElementById('tracks');
+    console.log('#tracks element found:', !!tracksEl);
+    tracksEl.appendChild(trackEl);
+    console.log('tracks children count after append:', tracksEl.children.length);
+    tracksEl.scrollTop = tracksEl.scrollHeight; // Scroll to show the newly added track
 
     // Event listeners per la track
     const volumeSlider = trackEl.querySelector('.volume-slider');
     const panSlider = trackEl.querySelector('.pan-slider');
-    const eqLowSlider = trackEl.querySelector('.eq-low-slider');
-    const eqMidSlider = trackEl.querySelector('.eq-mid-slider');
-    const eqHighSlider = trackEl.querySelector('.eq-high-slider');
     const fadeInEnabled = trackEl.querySelector('.fade-in-enabled');
     const fadeOutEnabled = trackEl.querySelector('.fade-out-enabled');
     const fadeInSlider = trackEl.querySelector('.fade-in-slider');
@@ -182,20 +183,7 @@ export class UIManager {
       if (track.pannerNode) track.pannerNode.pan.value = track.pan;
     });
 
-    eqLowSlider.addEventListener('input', (e) => {
-      track.eq.low = parseFloat(e.target.value);
-      if (track.lowFilter) track.lowFilter.gain.value = track.eq.low;
-    });
 
-    eqMidSlider.addEventListener('input', (e) => {
-      track.eq.mid = parseFloat(e.target.value);
-      if (track.midFilter) track.midFilter.gain.value = track.eq.mid;
-    });
-
-    eqHighSlider.addEventListener('input', (e) => {
-      track.eq.high = parseFloat(e.target.value);
-      if (track.highFilter) track.highFilter.gain.value = track.eq.high;
-    });
 
     fadeInEnabled.addEventListener('change', (e) => {
       track.fadeInEnabled = e.target.checked;
@@ -274,14 +262,7 @@ export class UIManager {
       const panSlider = trackEl.querySelector('.pan-slider');
       if (panSlider) panSlider.value = track.pan;
 
-      const eqLowSlider = trackEl.querySelector('.eq-low-slider');
-      if (eqLowSlider) eqLowSlider.value = track.eq.low;
 
-      const eqMidSlider = trackEl.querySelector('.eq-mid-slider');
-      if (eqMidSlider) eqMidSlider.value = track.eq.mid;
-
-      const eqHighSlider = trackEl.querySelector('.eq-high-slider');
-      if (eqHighSlider) eqHighSlider.value = track.eq.high;
 
       const fadeInEnabled = trackEl.querySelector('.fade-in-enabled');
       if (fadeInEnabled) fadeInEnabled.checked = track.fadeInEnabled !== false;

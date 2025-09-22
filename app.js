@@ -44,20 +44,41 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Event listeners globali
-document.getElementById('play-all').addEventListener('click', async () => {
+// Funzione per aggiornare lo stato del bottone Play/Stop
+function updatePlayStopButton() {
+  const button = document.getElementById('play-stop');
+  if (mixerController.isPlaying) {
+    button.innerHTML = '⏹️ Stop Mix';
+    button.title = 'Stop Mix';
+  } else {
+    button.innerHTML = '▶️ Play Mix';
+    button.title = 'Play Mix';
+  }
+}
+
+// Event listener per il bottone unificato Play/Stop
+document.getElementById('play-stop').addEventListener('click', async () => {
   try {
-    // Assicura che AudioContext sia attivo prima di riprodurre
-    await audioEngine.ensureAudioContext();
-    mixerController.playAll();
+    if (!mixerController.isPlaying) {
+      console.log('Play button clicked');
+      // Assicura che AudioContext sia attivo prima di riprodurre
+      await audioEngine.ensureAudioContext();
+      console.log('AudioContext ensured, calling playAll');
+      mixerController.playAll();
+    } else {
+      console.log('Stop button clicked');
+      mixerController.stopAll();
+    }
+    updatePlayStopButton();
   } catch (error) {
-    console.error('Errore avvio audio:', error);
+    console.error('Errore gestione riproduzione:', error);
+    // Provide user feedback about the error
+    alert('Errore nella riproduzione audio. Controlla la console per dettagli.');
   }
 });
 
-document.getElementById('stop-all').addEventListener('click', () => {
-  mixerController.stopAll();
-});
+// Inizializza lo stato del bottone
+updatePlayStopButton();
 
 // Toolbar button event listeners
 document.getElementById('save-mix-btn').addEventListener('click', () => {
@@ -99,7 +120,8 @@ document.getElementById('delete-mix').addEventListener('click', () => {
 });
 
 // Event listener per aggiungere suoni categorie
-document.addEventListener('click', (e) => {
+const categoriesEl = document.getElementById('categories');
+categoriesEl.addEventListener('click', (e) => {
   if (e.target.classList.contains('add-sound')) {
     const path = e.target.dataset.path;
     console.log('Click suono:', path); // Debug
@@ -130,7 +152,9 @@ themeToggle.addEventListener('click', () => {
   setTheme(newTheme);
 });
 
-// Carica il primo mix salvato al boot (opzionale)
+// Caricamento automatico mix disabilitato
+// Per evitare che suoni partano automaticamente al refresh della pagina
+/*
 if (localStorage.length > 0) {
   setTimeout(() => {
     try {
@@ -146,6 +170,7 @@ if (localStorage.length > 0) {
     }
   }, 100); // Piccolo delay per garantire che l'UI sia pronta
 }
+*/
 
 /* Background Selection System */
 const backgroundFiles = [

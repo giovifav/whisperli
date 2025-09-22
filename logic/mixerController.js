@@ -7,6 +7,11 @@ export class MixerController {
     this.isPlaying = false;
   }
 
+  // Get traccia esistente
+  getTrack(soundPath) {
+    return this.mixerTracks.find(t => t.soundPath === soundPath);
+  }
+
   // Aggiungi traccia
   addTrack(soundPath) {
     if (this.mixerTracks.find(t => t.soundPath === soundPath)) return null;
@@ -23,21 +28,13 @@ export class MixerController {
       fadeOutDuration: 1.0,
       fadeInEnabled: true,
       fadeOutEnabled: true,
-      // Equalization parameters
-      eq: {
-        low: 0,    // dB (-20 to +20)
-        mid: 0,    // dB
-        high: 0    // dB
-      },
       source: null,
       gainNode: null,
       pannerNode: null,
-      lowFilter: null,
-      midFilter: null,
-      highFilter: null,
       timeoutId: null,
       isLoading: false,
-      isLoaded: false
+      isLoaded: false,
+      isRemoved: false
     };
 
     this.mixerTracks.push(track);
@@ -46,13 +43,16 @@ export class MixerController {
 
   // Rimuovi traccia
   removeTrack(track) {
-    this.audioEngine.stopTrack(track);
+    track.isRemoved = true;
+    this.audioEngine.stopTrack(track, true);
     this.mixerTracks = this.mixerTracks.filter(t => t !== track);
   }
 
   // Play tutti i suoni selezionati
   playAll() {
+    console.log(`Playing all tracks. Total tracks: ${this.mixerTracks.length}`);
     this.mixerTracks.forEach(track => {
+      console.log(`Track: ${track.soundPath}, has source: ${!!track.source}`);
       if (!track.source) {
         this.audioEngine.playTrack(track);
       }

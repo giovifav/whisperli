@@ -23,12 +23,7 @@ export class StorageManager {
         fadeInDuration: t.fadeInDuration,
         fadeOutDuration: t.fadeOutDuration,
         fadeInEnabled: t.fadeInEnabled,
-        fadeOutEnabled: t.fadeOutEnabled,
-        eq: {
-          low: t.eq.low,
-          mid: t.eq.mid,
-          high: t.eq.high
-        }
+        fadeOutEnabled: t.fadeOutEnabled
       })),
       timestamp: new Date().toISOString()
     };
@@ -80,12 +75,7 @@ export class StorageManager {
               track.fadeOutDuration = (typeof t.fadeOutDuration === 'number') ? t.fadeOutDuration : 1.0;
               track.fadeInEnabled = (typeof t.fadeInEnabled === 'boolean') ? t.fadeInEnabled : true;
               track.fadeOutEnabled = (typeof t.fadeOutEnabled === 'boolean') ? t.fadeOutEnabled : true;
-              // Load EQ settings
-              if (t.eq && typeof t.eq === 'object') {
-                track.eq.low = (typeof t.eq.low === 'number') ? t.eq.low : 0;
-                track.eq.mid = (typeof t.eq.mid === 'number') ? t.eq.mid : 0;
-                track.eq.high = (typeof t.eq.high === 'number') ? t.eq.high : 0;
-              }
+
 
               // Crea UI per la track
               this.uiManager.addToMixer(track.soundPath);

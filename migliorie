@@ -22,6 +22,13 @@
 - __Preset factory__: Mix predefiniti per ambienti (studio, relax, focus)
 - __Timer programmato__: Spegnimento automatico dopo tempi prefissati
 
+## __7. Bug Fixes__
+
+- __Gestione volume inconsistente__: Quando l'utente imposta il volume a 0 tramite slider, la traccia diventa silenziosa, ma le ripetizioni automatiche (modalità intervallo) impostano il volume a 0.1. Soluzione: Rimuovere la forzatura ≥0.1 in playTrack per rispettare le scelte dell'utente, oppure impostare min="0.01" nel volume slider per evitare silenziosità accidentale.
+- __Errori caricamento sfondi__: La lista hardcoded backgroundFiles in app.js potrebbe riferire a immagini inesistenti, causando onerror inutili e spreco di risorse. Soluzione: Implementa una generazione dinamica della lista di file dalla cartella backgrounds/ tramite fetch API o script backend.
+- __Calcolo intervalli casuali errato__: Nella modalità random-interval, se maxIntervalSec < minIntervalSec, i delay casuali vengono calcolati matematicamente incorrettamente. Soluzione: Usa Math.abs(max-min) + Math.min(min,max) per generare correttamente tra i valori impostati.
+- __Correzione automatica volume confusa__: L'utente si aspetta che il volume impostato persista, ma le riavvii automatiche sovrascrivono con 0.1. Soluzione: Documenta il comportamento o rimuovi l'override in playTrack per coerenza.
+
 Priorità suggerite:
 
 1. __Alta__: Visual feedback, tema moderno, fade controls

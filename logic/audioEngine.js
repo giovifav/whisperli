@@ -18,9 +18,16 @@ export class AudioEngine {
   // Assicura che l'AudioContext sia attivo
   async ensureAudioContext() {
     const ctx = this.getAudioContext();
+    console.log(`AudioContext state: ${ctx.state}`);
     if (ctx.state === 'suspended') {
       console.log('Riattivo AudioContext...');
-      await ctx.resume();
+      try {
+        await ctx.resume();
+        console.log(`AudioContext resumed. New state: ${ctx.state}`);
+      } catch (error) {
+        console.error('Failed to resume AudioContext:', error);
+        throw error;
+      }
     }
     return ctx;
   }
@@ -96,86 +103,95 @@ export class AudioEngine {
 
   // Riproduci traccia singola
   playTrack(track) {
+    console.log(`Attempting to play track: ${track.soundPath}, loopMode: ${track.loopMode}`);
+
+    if (track.isRemoved) return;
+
     if (this.buffers[track.soundPath]) {
       // Buffer già disponibile, riproduci con fade-in
       const ctx = this.getAudioContext();
-      const source = ctx.createBufferSource();
-      source.buffer = this.buffers[track.soundPath];
-      source.loop = (track.loopMode === 'loop');
+      console.log(`AudioContext state during playback: ${ctx.state}, buffers available: ${Object.keys(this.buffers).length}`);
 
-      // Crea catena audio: Source → Gain → EQ Filters → Panner → Destination
-      const gainNode = ctx.createGain();
-      const pannerNode = ctx.createStereoPanner();
+      try {
+        const source = ctx.createBufferSource();
+        console.log(`Created BufferSourceNode, buffer duration: ${this.buffers[track.soundPath].duration} seconds`);
+        source.buffer = this.buffers[track.soundPath];
+        source.loop = (track.loopMode === 'loop');
 
-      // Equalization filters
-      const lowFilter = ctx.createBiquadFilter();
-      lowFilter.type = 'lowshelf';
-      lowFilter.frequency.value = 250;
-      lowFilter.gain.value = track.eq.low;
+        console.log(`Source loop set to: ${source.loop}, volume: ${track.volume}, pan: ${track.pan}`);
 
-      const midFilter = ctx.createBiquadFilter();
-      midFilter.type = 'peaking';
-      midFilter.frequency.value = 1000;
-      midFilter.Q.value = 1;
-      midFilter.gain.value = track.eq.mid;
+        // Crea catena audio: Source → Gain → Panner → Destination
+        const gainNode = ctx.createGain();
+        const pannerNode = ctx.createStereoPanner();
 
-      const highFilter = ctx.createBiquadFilter();
-      highFilter.type = 'highshelf';
-      highFilter.frequency.value = 4000;
-      highFilter.gain.value = track.eq.high;
+        // Connetti la catena
+        source.connect(gainNode);
+        gainNode.connect(pannerNode);
+        pannerNode.connect(ctx.destination);
 
-      // Connetti la catena
-      source.connect(gainNode);
-      gainNode.connect(lowFilter);
-      lowFilter.connect(midFilter);
-      midFilter.connect(highFilter);
-      highFilter.connect(pannerNode);
-      pannerNode.connect(ctx.destination);
+        console.log('Audio nodes connected: source → gain → panner → destination');
 
-      // Imposta valori iniziali
-      if (track.fadeInEnabled) {
-        gainNode.gain.setValueAtTime(0, ctx.currentTime); // Inizia da zero per fade-in
-        gainNode.gain.linearRampToValueAtTime(track.volume, ctx.currentTime + track.fadeInDuration);
-      } else {
-        gainNode.gain.setValueAtTime(track.volume, ctx.currentTime); // Inizia direttamente al volume
-      }
-      pannerNode.pan.value = track.pan;
+        // Imposta valori iniziali
+        console.log(`Setting initial audio parameters: volume=${track.volume}, pan=${track.pan}, fadeIn=${track.fadeInEnabled}`);
+        if (track.fadeInEnabled) {
+          gainNode.gain.setValueAtTime(0, ctx.currentTime); // Inizia da zero per fade-in
+          gainNode.gain.linearRampToValueAtTime(track.volume, ctx.currentTime + track.fadeInDuration);
+          console.log(`Fade-in enabled: duration ${track.fadeInDuration}s, target volume: ${track.volume}`);
+        } else {
+          gainNode.gain.setValueAtTime(track.volume, ctx.currentTime); // Inizia direttamente al volume
+          console.log(`Immediate playback at volume: ${track.volume}`);
+        }
 
-      track.source = source;
-      track.gainNode = gainNode;
-      track.pannerNode = pannerNode;
-      track.lowFilter = lowFilter;
-      track.midFilter = midFilter;
-      track.highFilter = highFilter;
+        pannerNode.pan.value = track.pan;
 
-      source.start();
+        track.source = source;
+        track.gainNode = gainNode;
+        track.pannerNode = pannerNode;
 
-      // Gestisci fine riproduzione basata sui loop modes
-      if (track.loopMode === 'interval') {
-        source.onended = () => {
-          track.timeoutId = setTimeout(() => {
-            this.playTrack(track);
-          }, track.intervalSec * 1000);
-        };
-      } else if (track.loopMode === 'random-interval') {
-        source.onended = () => {
-          // Usa range configurabile tra minIntervalSec e maxIntervalSec
-          const randomRange = track.maxIntervalSec - track.minIntervalSec;
-          const randomDelay = (track.minIntervalSec + Math.random() * randomRange) * 1000;
-          track.timeoutId = setTimeout(() => {
-            this.playTrack(track);
-          }, randomDelay);
-        };
-      } else if (track.loopMode === 'play-once') {
-        // Applica fade out automatico quando finisce
-        source.onended = () => {
-          this.stopTrack(track);
-        };
+        console.log('Starting audio playback...');
+        source.start();
+        console.log('Audio playback started successfully');
+
+        // Gestisci fine riproduzione basata sui loop modes
+        if (track.loopMode === 'interval') {
+          console.log(`Setting up interval loop: ${track.intervalSec}s`);
+          source.onended = () => {
+            console.log('Audio ended, scheduling next interval play');
+            track.timeoutId = setTimeout(() => {
+              this.playTrack(track);
+            }, track.intervalSec * 1000);
+          };
+        } else if (track.loopMode === 'random-interval') {
+          console.log(`Setting up random interval loop: ${track.minIntervalSec}-${track.maxIntervalSec}s`);
+          source.onended = () => {
+            // Usa range configurabile tra minIntervalSec e maxIntervalSec
+            const randomRange = Math.abs(track.maxIntervalSec - track.minIntervalSec);
+            const randomDelay = (Math.min(track.minIntervalSec, track.maxIntervalSec) + Math.random() * randomRange) * 1000;
+            console.log(`Audio ended, scheduling next random play in ${Math.round(randomDelay/1000)}s`);
+            track.timeoutId = setTimeout(() => {
+              this.playTrack(track);
+            }, randomDelay);
+          };
+        } else if (track.loopMode === 'play-once') {
+          console.log('Setting up play-once mode');
+          // Applica fade out automatico quando finisce
+          source.onended = () => {
+            console.log('Audio ended, stopping track');
+            this.stopTrack(track);
+          };
+        } else {
+          console.log(`Loop mode: ${track.loopMode} (continuous loop)`);
+        }
+      } catch (error) {
+        console.error('Error during audio playback setup:', error);
+        throw error;
       }
     } else {
+      console.log('Buffer not available, loading first...');
       // Buffer non ancora caricato, carica prima
       this.loadAudioBuffer(track,
         (audioBuffer) => {
+          console.log('Buffer loaded, now playing...');
           // Buffer caricato, ora riproduci
           this.playTrack(track);
         },
@@ -187,10 +203,10 @@ export class AudioEngine {
   }
 
   // Ferma traccia
-  stopTrack(track) {
+  stopTrack(track, immediate = false) {
     if (track.source && track.gainNode) {
-      // Se fade out è disabilitato, interrompi immediatamente
-      if (!track.fadeOutEnabled) {
+      // Se immediate o fade out disabilitato, interrompi immediatamente
+      if (immediate || !track.fadeOutEnabled) {
         if (track.source) {
           track.source.stop();
           track.source.disconnect();
@@ -204,12 +220,7 @@ export class AudioEngine {
           track.pannerNode.disconnect();
           track.pannerNode = null;
         }
-        if (track.lowFilter) track.lowFilter.disconnect();
-        if (track.midFilter) track.midFilter.disconnect();
-        if (track.highFilter) track.highFilter.disconnect();
-        track.lowFilter = null;
-        track.midFilter = null;
-        track.highFilter = null;
+
       } else {
         // Applica fade-out
         const ctx = this.getAudioContext();
@@ -235,12 +246,7 @@ export class AudioEngine {
             track.pannerNode.disconnect();
             track.pannerNode = null;
           }
-          if (track.lowFilter) track.lowFilter.disconnect();
-          if (track.midFilter) track.midFilter.disconnect();
-          if (track.highFilter) track.highFilter.disconnect();
-          track.lowFilter = null;
-          track.midFilter = null;
-          track.highFilter = null;
+
         }, fadeTime * 1000);
       }
     }
