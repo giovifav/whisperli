@@ -19,6 +19,14 @@ export class UIManager {
       requestAnimationFrame(this.updatePlaying);
     };
     this.sliderUpdateInterval = requestAnimationFrame(this.updatePlaying);
+
+    // Event listener for window resize
+    window.addEventListener('resize', () => this.handleResize());
+  }
+
+  // Helper method to check if in desktop mode
+  isDesktopMode() {
+    return window.innerWidth > 768; // Using 768px as a breakpoint for desktop
   }
 
   // Inizializza categorie nell'UI
@@ -26,7 +34,7 @@ export class UIManager {
     const categoriesEl = document.getElementById('categories');
     Object.keys(soundFiles).forEach(category => {
       const catDiv = document.createElement('div');
-      catDiv.className = 'category collapsed';
+      catDiv.className = 'category'; // Start without collapsed/expanded class
       catDiv.innerHTML = `<h3>${category.toUpperCase()}</h3><div class="sound-list">`;
       const soundList = catDiv.querySelector('.sound-list');
       console.log(`Initializing category: ${category}, sounds count: ${soundFiles[category].length}`);
@@ -39,6 +47,9 @@ export class UIManager {
       });
       categoriesEl.appendChild(catDiv);
       this.categoryElements[category] = catDiv;
+
+      // Set categories as collapsed by default
+      catDiv.classList.add('collapsed');
 
       // Click handler per espandere/collassare
       const h3 = catDiv.querySelector('h3');
@@ -61,6 +72,27 @@ export class UIManager {
     searchInput.addEventListener('input', (e) => this.applySearchFilter(e.target.value));
 
     // Inizializzato categorie con click semplice
+  }
+
+  // Handle window resize to adjust category states
+  handleResize() {
+    const isDesktop = this.isDesktopMode();
+    Object.keys(this.categoryElements).forEach(category => {
+      const catDiv = this.categoryElements[category];
+      const soundList = catDiv.querySelector('.sound-list');
+      const h3 = catDiv.querySelector('h3');
+
+      if (isDesktop) {
+        soundList.classList.add('show');
+        catDiv.classList.add('expanded');
+        catDiv.classList.remove('collapsed');
+      } else {
+        // If not in desktop mode, revert to collapsed state
+        soundList.classList.remove('show');
+        catDiv.classList.remove('expanded');
+        catDiv.classList.add('collapsed');
+      }
+    });
   }
 
   // Sistema click semplice per aggiungere suoni
@@ -95,7 +127,7 @@ export class UIManager {
       <div class="track-info">
         <h4>${getDisplayName(soundPath.split('/').pop())}</h4>
         <div class="control-group">
-          <label>🔊 Volume</label>
+          <label><i class="fas fa-volume-up"></i> Volume</label>
           <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider">
         </div>
         <div class="volume-indicator">
@@ -105,11 +137,11 @@ export class UIManager {
         </div>
       </div>
         <div class="track-actions">
-          <button class="remove-track" title="Rimuovi traccia">🗑️</button>
+          <button class="remove-track" title="Rimuovi traccia"><i class="fas fa-trash"></i></button>
         </div>
       </div>
       <div class="advanced-toggle">
-        <button class="toggle-advanced" title="Opzioni avanzate">⚙️ Advanced Controls</button>
+        <button class="toggle-advanced" title="Opzioni avanzate"><i class="fas fa-cog"></i> Advanced Controls</button>
       </div>
       <div class="track-controls advanced hidden">
         <!-- Tab Navigation -->
@@ -123,7 +155,7 @@ export class UIManager {
         <div class="tab-content active" data-tab="basic">
           <div class="control-row">
             <div class="control-group">
-              <label>📍 Pan</label>
+              <label><i class="fas fa-sliders-h"></i> Pan</label>
               <input type="range" min="-1" max="1" step="0.01" value="0" class="pan-slider">
             </div>
           </div>
@@ -131,14 +163,14 @@ export class UIManager {
           <div class="control-row">
             <div class="control-group">
               <label>
-                <input type="checkbox" checked class="fade-in-enabled"> 🌅 Fade In
+                <input type="checkbox" checked class="fade-in-enabled"> <i class="fas fa-sun"></i> Fade In
               </label>
               <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-in-slider">
               <span class="fade-value">1.0s</span>
             </div>
             <div class="control-group">
               <label>
-                <input type="checkbox" checked class="fade-out-enabled"> 🌆 Fade Out
+                <input type="checkbox" checked class="fade-out-enabled"> <i class="fas fa-moon"></i> Fade Out
               </label>
               <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-out-slider">
               <span class="fade-value">1.0s</span>
@@ -150,7 +182,7 @@ export class UIManager {
         <div class="tab-content" data-tab="loop">
           <div class="control-row">
             <div class="control-group full-width">
-              <label>🔄 Loop Mode</label>
+              <label><i class="fas fa-redo"></i> Loop Mode</label>
               <select class="loop-mode">
                 <option value="loop">Loop</option>
                 <option value="interval">Interval</option>
@@ -176,13 +208,13 @@ export class UIManager {
           <div class="control-row">
             <div class="control-group full-width">
               <label>
-                <input type="checkbox" class="automation-enabled"> ⚡ Temporal Automation
+                <input type="checkbox" class="automation-enabled"> <i class="fas fa-bolt"></i> Temporal Automation
               </label>
             </div>
           </div>
           <div class="control-row temporali-automatismi hidden">
             <div class="control-group">
-              <label>📈 Volume Automation:</label>
+              <label><i class="fas fa-chart-line"></i> Volume Automation:</label>
               <select class="volume-automation-type">
                 <option value="linear">Linear</option>
                 <option value="exponential">Exponential</option>
@@ -200,7 +232,7 @@ export class UIManager {
             </div>
             <div class="control-group">
               <label>
-                <input type="checkbox" class="pan-automation-enabled"> 🎛️ Pan Automation
+                <input type="checkbox" class="pan-automation-enabled"> <i class="fas fa-sliders-h"></i> Pan Automation
               </label>
               <br>
               <label>Duration (s):</label>
@@ -216,7 +248,7 @@ export class UIManager {
             </div>
             <div class="control-group">
               <label>
-                <input type="checkbox" class="probabilistic-spawn-enabled"> 🎲 Probabilistic Spawn
+                <input type="checkbox" class="probabilistic-spawn-enabled"> <i class="fas fa-dice"></i> Probabilistic Spawn
               </label>
               <br>
               <label>Min Interval (s):</label>
@@ -413,7 +445,7 @@ export class UIManager {
     toggleBtn.addEventListener('click', () => {
       const isHidden = advancedControls.classList.contains('hidden');
       advancedControls.classList.toggle('hidden', !isHidden);
-      toggleBtn.textContent = isHidden ? '⚙️ Hide Advanced' : '⚙️ Advanced Controls';
+      toggleBtn.innerHTML = isHidden ? '<i class="fas fa-cog"></i> Hide Advanced' : '<i class="fas fa-cog"></i> Advanced Controls';
     });
 
     // Tab switching functionality

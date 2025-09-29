@@ -22,15 +22,16 @@
   --shadow-elevated: rgba(0, 0, 0, 0.2);
 
   /* Modern spacing and sizing */
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
-  --border-radius-xl: 16px;
+  --border-radius-sm: 0;
+  --border-radius-md: 0;
+  --border-radius-lg: 0;
+  --border-radius-xl: 0;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
+  --toolbar-height: 60px;
 
   /* Frosted glass variables - light theme */
   --frosted-primary: rgba(255, 255, 255, 0.3);
@@ -44,7 +45,7 @@
   --scrollbar-width: 6px;
   --scrollbar-track-bg: transparent;
   --scrollbar-thumb-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.15));
-  --scrollbar-thumb-border-radius: 6px;
+  --scrollbar-thumb-border-radius: 0;
   --scrollbar-thumb-hover-bg: linear-gradient(180deg, rgba(26, 115, 232, 0.4), rgba(26, 115, 232, 0.2));
 
   /* Animation variables */
@@ -98,20 +99,16 @@ body {
 /* WebKit browsers (Chrome, Safari, Edge) */
 .minimal-scrollbar::-webkit-scrollbar {
   width: var(--scrollbar-width);
-  direction: ltr; /* Fix for scrollbar rotation issue */
 }
 
 .minimal-scrollbar::-webkit-scrollbar-track {
   background: var(--scrollbar-track-bg);
-  direction: ltr; /* Ensure proper orientation */
 }
 
 .minimal-scrollbar::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-bg);
   border-radius: var(--scrollbar-thumb-border-radius);
   transition: background 0.2s ease;
-  direction: ltr; /* Prevent rotation */
-  transform: none; /* Explicitly prevent any transforms */
 }
 
 .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -120,5 +117,4 @@ body {
 
 .minimal-scrollbar::-webkit-scrollbar-corner {
   background: var(--scrollbar-track-bg);
-  direction: ltr;
 }

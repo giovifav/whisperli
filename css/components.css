@@ -1,59 +1,3 @@
-/* Apply minimal scrollbar to all scrollable elements */
-#app-window,
-#categories,
-#tracks,
-.sound-list,
-.modal-content {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb-bg) var(--scrollbar-track-bg);
-}
-
-#app-window::-webkit-scrollbar,
-#categories::-webkit-scrollbar,
-#tracks::-webkit-scrollbar,
-.sound-list::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar {
-  width: var(--scrollbar-width);
-  direction: ltr; /* Fix for scrollbar rotation issue */
-}
-
-#app-window::-webkit-scrollbar-track,
-#categories::-webkit-scrollbar-track,
-#tracks::-webkit-scrollbar-track,
-.sound-list::-webkit-scrollbar-track,
-.modal-content::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-bg);
-  direction: ltr; /* Ensure proper orientation */
-}
-
-#app-window::-webkit-scrollbar-thumb,
-#categories::-webkit-scrollbar-thumb,
-#tracks::-webkit-scrollbar-thumb,
-.sound-list::-webkit-scrollbar-thumb,
-.modal-content::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb-bg);
-  border-radius: var(--scrollbar-thumb-border-radius);
-  transition: background 0.2s ease;
-  direction: ltr; /* Prevent rotation */
-  transform: none; /* Explicitly prevent any transforms */
-}
-
-#app-window::-webkit-scrollbar-thumb:hover,
-#categories::-webkit-scrollbar-thumb:hover,
-#tracks::-webkit-scrollbar-thumb:hover,
-.sound-list::-webkit-scrollbar-thumb:hover,
-.modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover-bg);
-}
-
-#app-window::-webkit-scrollbar-corner,
-#categories::-webkit-scrollbar-corner,
-#tracks::-webkit-scrollbar-corner,
-.sound-list::-webkit-scrollbar-corner,
-.modal-content::-webkit-scrollbar-corner {
-  background: var(--scrollbar-track-bg);
-  direction: ltr;
-}
 
 #container {
   position: relative;
@@ -64,12 +8,12 @@
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
-  height: calc(100vh - 140px); /* Fixed height: viewport - toolbar - padding */
-  min-height: calc(100vh - 140px);
-  max-height: calc(100vh - 140px); /* Rigid constraint - prevent expansion */
-  padding: 100px 20px 20px 20px;
+  height: auto; /* Allow height to adjust based on content */
+  min-height: calc(100vh - var(--toolbar-height) - 80px); /* Maintain minimum height */
+  max-height: none; /* Allow expansion */
+  padding: calc(var(--toolbar-height) + 40px) 20px 20px 20px;
   box-sizing: border-box;
-  overflow: hidden; /* Completely contained, no expansion at all */
+  overflow: visible; /* Allow content to overflow if needed */
 }
 
 /* Search container - scrollable within categories */
@@ -80,7 +24,7 @@
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--frosted-border);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: 0 6px 20px var(--shadow);
   box-sizing: border-box;
   display: block; /* Visible by default, hide when moved */
@@ -90,7 +34,7 @@
   width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--frosted-border);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--frosted-secondary);
   color: var(--text-primary);
   font-size: 16px;
@@ -115,7 +59,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 1000; /* Higher z-index for desktop, reduced to 10 on mobile in responsive.css */
   background: var(--frosted-toolbar);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -174,24 +118,7 @@
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
-/* Play/stop button special styling */
-#play-stop {
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover)) !important;
-  color: white !important;
-  border-color: var(--accent-color) !important;
-  font-weight: 700;
-  position: relative;
-}
-
-#play-stop:hover {
-  background: linear-gradient(135deg, var(--accent-hover), #0d5aa8) !important;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(26, 115, 232, 0.4);
-}
-
-#play-stop:active {
-  transform: translateY(-1px);
-}
+/* Play/stop button - no special styling for mobile consistency */
 
 /* Status indicators for buttons */
 #play-stop.playing {
@@ -211,7 +138,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--frosted-border);
-  border-radius: 50%;
+  border-radius: 0;
   padding: 12px;
   cursor: pointer;
   width: 48px;
@@ -250,7 +177,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--frosted-border);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 8px;
   box-shadow: 0 8px 32px var(--shadow);
   height: 100%;
@@ -263,12 +190,12 @@
 }
 
 .category.collapsed {
-  border-radius: 16px;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .category.expanded {
-  border-radius: 16px 16px 0 0;
+  border-radius: 0;
   overflow: visible;
 }
 
@@ -282,12 +209,12 @@
   font-size: 16px;
   font-weight: 600;
   border: 1px solid var(--frosted-border);
-  border-radius: 16px;
+  border-radius: 0;
   transition: all 0.3s;
 }
 
 .category.expanded h3 {
-  border-radius: 16px 16px 0 0;
+  border-radius: 0;
 }
 
 .category h3:hover {
@@ -317,7 +244,7 @@
 .sound-list {
   display: none;
   padding: 8px 24px 8px 8px; /* Padding destro extra per scrollbar */
-  border-radius: 16px;
+  border-radius: 0;
 }
 
 .sound-list.show {
@@ -326,13 +253,13 @@
   background: var(--frosted-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 0 0 16px 16px;
+  border-radius: 0;
 }
 
 .sound {
   margin: 4px 0;
   padding: 8px;
-  border-radius: 4px;
+  border-radius: 0;
   transition: background-color 0.2s;
 }
 
@@ -349,7 +276,7 @@
   border: 1px solid var(--frosted-border);
   color: var(--text-primary);
   padding: 6px 12px;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -393,7 +320,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--frosted-border);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 0;
   box-shadow: 0 8px 32px var(--shadow);
   display: flex;
@@ -412,8 +339,7 @@
   color: var(--text-primary);
   font-size: 24px;
   font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid var(--frosted-border);
+  /* Removed border-radius and border for better integration */
 }
 
 #tracks {
@@ -541,14 +467,14 @@
   flex: 1;
   height: 4px;
   background: var(--bg-quaternary);
-  border-radius: 2px;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .volume-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--success-color), var(--warning-color), var(--error-color));
-  border-radius: 2px;
+  border-radius: 0;
   transition: width var(--transition-fast);
 }
 
@@ -753,12 +679,22 @@
 }
 
 .control-group input[type="range"]::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 20px; /* Unified with webkit */
+  height: 20px; /* Unified with webkit */
   border-radius: 50%;
   background: var(--accent-color);
   cursor: pointer;
   border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Added for consistency */
+  transition: transform 0.1s ease; /* Added for consistency */
+}
+
+.control-group input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.1); /* Added for consistency */
+}
+
+.control-group input[type="range"]:active::-moz-range-thumb {
+  transform: scale(1.2); /* Added for consistency */
 }
 
 .control-group select {
@@ -838,30 +774,6 @@
   background: var(--bg-secondary);
 }
 
-.control-group label {
-  display: block;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-
-.control-group input[type="range"] {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--bg-secondary);
-  outline: none;
-}
-
-.control-group input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--accent-color);
-  cursor: pointer;
-}
-
 .control-group input[type="number"] {
   width: 100%;
   padding: 6px 8px;
@@ -883,7 +795,7 @@
   color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 16px;
   font-weight: 500;
@@ -903,7 +815,7 @@
   margin-bottom: 20px;
   padding: 16px;
   background: var(--bg-tertiary);
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
 }
 
@@ -924,7 +836,7 @@
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -933,7 +845,7 @@
   flex: 1;
   padding: 8px 12px;
   border: 1px solid var(--border-color);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -943,7 +855,7 @@
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s;
@@ -1031,7 +943,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--frosted-border);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: 0 20px 40px var(--shadow);
   max-width: 500px;
   width: 90%;
@@ -1102,7 +1014,7 @@
   flex: 1;
   padding: 12px 16px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 16px;
@@ -1124,7 +1036,7 @@
   border: 1px solid var(--frosted-border);
   color: var(--text-primary);
   padding: 12px 20px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -1180,7 +1092,7 @@
   flex: 1;
   padding: 12px 16px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 16px;
@@ -1200,7 +1112,7 @@
   border: 1px solid var(--frosted-border);
   color: var(--text-primary);
   padding: 12px 20px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -1222,7 +1134,7 @@
   min-width: 100px;
   min-height: 100px;
   border: 2px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.3s ease;
   background: var(--bg-tertiary);

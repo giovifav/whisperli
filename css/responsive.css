@@ -15,66 +15,79 @@
   /* Mobile-first layout */
   #container {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr 2fr;
-    gap: 12px;
-    max-height: calc(100vh - 110px); /* Compressed height for mobile */
-    padding: 110px 12px 12px 12px; /* Reduced padding */
-  }
-
-  /* Reduced toolbar for mobile */
-  #app-toolbar {
-    padding: 2px 16px;
-  }
-
-  /* Reduced button heights for mobile to fit better */
-  #toolbar-controls button {
-    min-height: 40px;
-    padding: 8px 12px;
-    font-size: 13px;
-  }
-
-  #app-toolbar button {
-    min-height: 40px;
-    padding: 8px 12px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+    height: auto;
+    min-height: min(100vh, 100dvh);
+    padding: calc(var(--toolbar-height) + 10px) 8px 40px 8px;
+    margin-bottom: 0;
   }
 
   #categories {
     grid-column: 1;
     grid-row: 1;
-    height: 40vh; /* Fixed height ratio */
-    max-height: 40vh;
-    min-height: 200px;
+    height: auto;
+    max-height: min(320px, 45vh);
+    min-height: 120px;
+    align-self: stretch;
   }
 
   #mixer {
     grid-column: 1;
     grid-row: 2;
-    height: 60vh; /* Fixed height ratio */
-    max-height: 60vh;
-    min-height: 300px;
+    margin-top: 0;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    /* Ensure borders are visible on mobile */
+    background: var(--frosted-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--frosted-border);
+    border-radius: 0;
+    box-shadow: 0 8px 32px var(--shadow);
   }
 
   #tracks {
-    height: calc(100% - 20px);
-    max-height: calc(100% - 20px);
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    max-height: none;
   }
 
-  /* Larger touch targets for mobile - reduced for fit */
-  #app-toolbar button {
-    min-height: 40px; /* Reduced from 48 for better fit */
+  /* Reduced toolbar for mobile */
+  #app-toolbar {
     padding: 8px 12px;
+    z-index: 10;
+  }
+
+  /* Critical spacing adjustments for mobile */
+  #app-window {
+    height: auto;
+    min-height: min(100vh, 100dvh);
+  }
+  #app-toolbar button {
+    min-height: 36px; /* Smaller to save space */
+    padding: 6px 10px;
     font-size: 14px; /* Prevent zoom on iOS */
   }
 
   #theme-toggle {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
   }
 
   .track {
     margin-bottom: 12px;
     padding: 12px;
+  }
+
+  /* Larger touch target for category buttons on mobile */
+  .category h3 {
+    padding: 12px 16px;
   }
 
   .remove-track {
@@ -89,9 +102,9 @@
   }
 
   .toggle-advanced {
-    padding: 8px 16px;
-    font-size: 14px;
-    min-height: 40px;
+    padding: 6px 12px;
+    font-size: 13px;
+    min-height: 36px;
   }
 
   /* Mobile-specific simplified UI */
@@ -116,7 +129,7 @@
   /* Modal bottom-sheet for mobile */
   .modal-content {
     margin: auto 0 0 0; /* Position at bottom */
-    border-radius: 12px 12px 0 0;
+    border-radius: 0;
     max-width: 100%;
     width: 100%;
     max-height: 90vh;
@@ -126,19 +139,18 @@
 @media (max-width: 480px) {
   #container {
     gap: 12px;
+    padding: calc(var(--toolbar-height) + 5px) 5px 15px 5px;
   }
 
-  #categories, #mixer {
-    padding: 12px;
+  #categories,
+  #mixer {
+    padding: 8px;
   }
 
   .category h3 {
-    padding: 8px 12px;
+    padding: 10px 14px;
   }
-}
 
-/* Mobile modal responsiveness */
-@media (max-width: 480px) {
   .modal-content {
     width: 95%;
     margin: 10px;
@@ -169,34 +181,76 @@
 
 /* Enhanced mobile controls organization */
 @media (max-width: 640px) {
-  /* Toolbar reorganization for mobile */
+  /* Toolbar reorganization for mobile - single row with icons */
+  #app-toolbar {
+    padding: 8px;
+  }
+
   #toolbar-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 8px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 4px;
     width: 100%;
+    flex-wrap: nowrap;
   }
 
   #toolbar-controls button {
+    flex: 1;
     justify-content: center;
+    align-items: center;
     min-height: 40px;
-    padding: 8px 8px;
-    font-size: 13px;
+    max-width: 56px;
+    min-width: 44px;
+    padding: 8px 6px;
+    font-size: 16px;
+    border-radius: 0;
+    font-weight: normal;
   }
 
-  /* Primary controls first row */
-  #play-stop {
-    grid-column: 1 / -1;
-    grid-row: 1;
+  /* Remove gap from button content */
+  #toolbar-controls button::before,
+  #toolbar-controls button::after {
+    display: none;
+  }
+
+  /* All buttons uniform */
+  #toggle-sounds,
+  #play-stop,
+  #save-mix-btn,
+  #load-mix-btn {
+    display: flex; /* Removed !important */
+    flex: 1;
+  }
+
+  /* Hide button text on mobile */
+  #toolbar-controls button .text {
+    display: none;
+  }
+
+  #toggle-sounds {
     order: 1;
   }
 
-  /* Secondary controls second row */
-  #save-mix-btn, #load-mix-btn {
-    grid-row: 2;
+  #play-stop {
     order: 2;
+  }
+
+  #save-mix-btn {
     order: 3;
+  }
+
+  #load-mix-btn {
+    order: 4;
+  }
+
+  /* Theme toggle separate */
+  #theme-toggle {
+    order: 5;
+    margin-left: auto;
+    flex: none;
+    width: 44px;
+    height: 44px;
   }
 
   /* Less used controls moved to end or hidden */
@@ -206,7 +260,15 @@
 
   .track {
     /* Better mobile spacing */
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+  }
+
+  #search-container {
+    margin-top: 12px;
+  }
+
+  .category {
+    margin-bottom: 8px;
   }
 
   .volume-indicator {
@@ -222,17 +284,17 @@
     display: block;
   }
 
-  /* Larger touch targets */
+  /* Smaller button targets for compact mobile */
   .tab-button {
-    min-height: 44px;
-    padding: 12px 16px;
-    font-size: 14px;
+    min-height: 40px;
+    padding: 10px 14px;
+    font-size: 13px;
   }
 
   .toggle-advanced {
-    min-height: 44px;
-    padding: 12px 20px;
-    font-size: 14px;
+    min-height: 40px;
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 
@@ -251,7 +313,7 @@
   background: var(--bg-primary);
   color: var(--text-primary);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 12px;
   white-space: nowrap;
   box-shadow: 0 4px 12px var(--shadow);
@@ -328,6 +390,7 @@
 
   #search-container #sound-search {
     background: var(--bg-primary);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1); /* Added fallback box-shadow */
   }
 
   [data-theme="dark"] #search-container,

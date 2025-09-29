@@ -32,6 +32,21 @@ function updateLoader(progress) {
   }
 }
 
+// Modal functionality
+function showModal(modalId) {
+  document.getElementById(modalId).classList.add('show');
+}
+
+function hideModal(modalId) {
+  document.getElementById(modalId).classList.remove('show');
+}
+
+function hideAllModals() {
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.classList.remove('show');
+  });
+}
+
 // Initialize app with progress updates
 async function initializeApp() {
   showSplash();
@@ -46,6 +61,18 @@ async function initializeApp() {
     // Step 2: Initialize UI categories (50%)
     await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for visible progress
     uiManager.initCategories();
+
+    // Initialize mobile settings: hide sound list by default on mobile
+    if (window.innerWidth <= 768) {
+      document.getElementById('container').classList.add('sound-list-hidden');
+      const toggleBtn = document.getElementById('toggle-sounds');
+      if (toggleBtn) {
+        toggleBtn.style.display = 'inline-block';
+        toggleBtn.innerHTML = `<i class="fas fa-volume-off"></i><span id="toggle-sounds-text" class="text">Toggle Sounds</span>`;
+        toggleBtn.title = 'Mostra lista suoni';
+      }
+    }
+
     updateLoader(60);
 
     // Step 3: Initialize storage and background system (80%)
@@ -77,21 +104,6 @@ async function initializeApp() {
 
   const { audioEngine, mixerController, uiManager, storageManager } = appComponents;
 
-  // Modal functionality
-  function showModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
-  }
-
-  function hideModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
-  }
-
-  function hideAllModals() {
-    document.querySelectorAll('.modal').forEach(modal => {
-      modal.classList.remove('show');
-    });
-  }
-
   // Close modals when clicking on backdrop or close button
   document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close')) {
@@ -109,11 +121,12 @@ async function initializeApp() {
   // Funzione per aggiornare lo stato del bottone Play/Stop
   function updatePlayStopButton() {
     const button = document.getElementById('play-stop');
+    const buttonText = document.getElementById('play-stop-text');
     if (mixerController.isPlaying) {
-      button.innerHTML = '⏹️ Stop Mix';
+      button.innerHTML = `<i class="fas fa-stop"></i><span id="play-stop-text" class="text">Stop</span>`;
       button.title = 'Stop Mix';
     } else {
-      button.innerHTML = '▶️ Play Mix';
+      button.innerHTML = `<i class="fas fa-play"></i><span id="play-stop-text" class="text">Play</span>`;
       button.title = 'Play Mix';
     }
   }
@@ -142,7 +155,35 @@ async function initializeApp() {
   // Inizializza lo stato del bottone
   updatePlayStopButton();
 
+  // Funzione per toggolare visibilità lista suoni (per mobile)
+  function toggleSoundList() {
+    const container = document.getElementById('container');
+    const toggleBtn = document.getElementById('toggle-sounds');
+    const categories = document.getElementById('categories');
+
+    // Controlla se è mobile (schermo piccolo)
+    if (window.innerWidth <= 768) {
+      const isHidden = categories.style.display === 'none';
+
+      if (isHidden) {
+        // Mostra lista suoni
+        categories.style.display = 'block';
+        toggleBtn.innerHTML = `<i class="fas fa-volume-up"></i><span id="toggle-sounds-text" class="text">Toggle Sounds</span>`;
+        toggleBtn.title = 'Nascondi lista suoni';
+      } else {
+        // Nasconde lista suoni
+        categories.style.display = 'none';
+        toggleBtn.innerHTML = `<i class="fas fa-volume-off"></i><span id="toggle-sounds-text" class="text">Toggle Sounds</span>`;
+        toggleBtn.title = 'Mostra lista suoni';
+      }
+    }
+  }
+
   // Toolbar button event listeners
+  document.getElementById('toggle-sounds').addEventListener('click', () => {
+    toggleSoundList();
+  });
+
   document.getElementById('save-mix-btn').addEventListener('click', () => {
     showModal('save-modal');
   });
@@ -197,7 +238,7 @@ async function initializeApp() {
 
   function updateThemeButton(theme) {
     // Use consistent, intuitive icons: sun for light theme, moon for dark theme
-    themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
     themeToggle.title = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
   }
 
@@ -511,7 +552,7 @@ function showPlaceholder(item, filename) {
 function showLoading(item) {
   const loading = document.createElement('div');
   loading.className = 'background-loading';
-  loading.innerHTML = '⏳';
+  loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
   item.innerHTML = '';
   item.appendChild(loading);
 }
