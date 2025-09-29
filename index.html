@@ -2,22 +2,28 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Sound Mixer SPA</title>
   <link rel="icon" type="image/x-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFFFFF'%3E%3Cpath d='M12 2C13.1 2 14 2.9 14 4V5C14 6.1 13.1 7 12 7S10 6.1 10 5V4C10 2.9 10.9 2 12 2ZM12 4C11.45 4 11 4.45 11 5V6C11 6.55 11.45 7 12 7S13 6.55 13 6V5C13 4.45 12.55 4 12 4ZM4 8C4 6 5.79 4.5 8 4.5H16C18.21 4.5 20 6 20 8V14C20 16 18.21 17.5 16 17.5H8C5.79 17.5 4 16 4 14V8ZM8 6.5C6.62 6.5 5.5 7.25 5.5 8V14C5.5 15.75 6.62 16.5 8 16.5H16C17.38 16.5 18.5 15.75 18.5 14V8C18.5 7.25 17.38 6.5 16 6.5H8ZM16 10C16.55 10 17 10.45 17 11S16.55 12 16 12 15 11.55 15 11 15.45 10 16 10ZM12 10C12.55 10 13 10.45 13 11S12.55 12 12 12 11 11.55 11 11 11.45 10 12 10ZM8 10C8.55 10 9 10.45 9 11S8.55 12 8 12 7 11.55 7 11 7.45 10 8 10Z'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
   <div id="app-window">
     <!-- Toolbar -->
-    <div id="app-toolbar">
+  <div id="app-toolbar">
     <div id="toolbar-controls">
-      <button id="play-stop" title="Play Mix">▶️ Play Mix</button>
-      <button id="save-mix-btn" title="Save Mix">💾 Save Mix</button>
-      <button id="load-mix-btn" title="Load Mix">📁 Load Mix</button>
-      <button id="background-btn" title="Select Background">🖼️ Background</button>
+      <button id="play-stop" data-tooltip="▶️ Start mixing your selected sounds or ⏹️ Stop all playback">▶️ Play Mix</button>
+      <button id="save-mix-btn" data-tooltip="💾 Save your current mix configuration to load later">💾 Save Mix</button>
+      <button id="load-mix-btn" data-tooltip="📁 Load a previously saved mix configuration">📁 Load Mix</button>
+      <button id="background-btn" data-tooltip="🖼️ Choose a beautiful background image for your workspace" style="display: none;">🖼️ Background</button>
     </div>
-    <button id="theme-toggle" aria-label="Toggle dark theme">
-      �
+    <button id="theme-toggle" data-tooltip="🌙 Switch to dark theme or ☀️ Switch to light theme">
+      
     </button>
   </div>
 
@@ -94,6 +100,22 @@
         <div id="background-grid" class="background-grid">
           <!-- Background thumbnails will be populated here by JS -->
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splash Screen -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <h1>Whisperli</h1>
+        <p>Audio Sound Mixer</p>
+      </div>
+      <div class="splash-loader">
+        <div class="loader-bar">
+          <div class="loader-fill"></div>
+        </div>
+        <div class="loading-text">Initializing audio engine...</div>
       </div>
     </div>
   </div>

@@ -13,6 +13,12 @@ export class UIManager {
     this.audioEngine = audioEngine;
     this.mixerController = mixerController;
     this.categoryElements = {};
+    // Update sliders smoothly to reflect current automated values
+    this.updatePlaying = () => {
+      this.updatePlayingTrackSliders();
+      requestAnimationFrame(this.updatePlaying);
+    };
+    this.sliderUpdateInterval = requestAnimationFrame(this.updatePlaying);
   }
 
   // Inizializza categorie nell'UI
@@ -86,62 +92,139 @@ export class UIManager {
     trackEl.dataset.path = soundPath;
     trackEl.innerHTML = `
       <div class="track-header">
-        <div class="track-info">
-          <h4>${getDisplayName(soundPath.split('/').pop())}</h4>
-          <div class="control-group">
-            <label>🔊 Volume</label>
-            <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider">
+      <div class="track-info">
+        <h4>${getDisplayName(soundPath.split('/').pop())}</h4>
+        <div class="control-group">
+          <label>🔊 Volume</label>
+          <input type="range" min="0" max="1" step="0.01" value="0.5" class="volume-slider">
+        </div>
+        <div class="volume-indicator">
+          <div class="volume-level">
+            <div class="volume-fill"></div>
           </div>
         </div>
+      </div>
         <div class="track-actions">
           <button class="remove-track" title="Rimuovi traccia">🗑️</button>
         </div>
       </div>
       <div class="advanced-toggle">
-        <button class="toggle-advanced" title="Opzioni avanzate">⚙️ Advanced</button>
+        <button class="toggle-advanced" title="Opzioni avanzate">⚙️ Advanced Controls</button>
       </div>
       <div class="track-controls advanced hidden">
-        <div class="control-row">
-          <div class="control-group">
-            <label>📍 Pan</label>
-            <input type="range" min="-1" max="1" step="0.01" value="0" class="pan-slider">
+        <!-- Tab Navigation -->
+        <div class="control-tabs">
+          <button class="tab-button active" data-tab="basic">Basic</button>
+          <button class="tab-button" data-tab="loop">Loop</button>
+          <button class="tab-button" data-tab="automation">Automation</button>
+        </div>
+
+        <!-- Basic Tab -->
+        <div class="tab-content active" data-tab="basic">
+          <div class="control-row">
+            <div class="control-group">
+              <label>📍 Pan</label>
+              <input type="range" min="-1" max="1" step="0.01" value="0" class="pan-slider">
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="control-group">
+              <label>
+                <input type="checkbox" checked class="fade-in-enabled"> 🌅 Fade In
+              </label>
+              <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-in-slider">
+              <span class="fade-value">1.0s</span>
+            </div>
+            <div class="control-group">
+              <label>
+                <input type="checkbox" checked class="fade-out-enabled"> 🌆 Fade Out
+              </label>
+              <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-out-slider">
+              <span class="fade-value">1.0s</span>
+            </div>
           </div>
         </div>
 
-        <div class="control-row">
-          <div class="control-group">
-            <label>
-              <input type="checkbox" checked class="fade-in-enabled"> 🌅 Fade In
-            </label>
-            <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-in-slider">
-            <span class="fade-value">1.0s</span>
-          </div>
-          <div class="control-group">
-            <label>
-              <input type="checkbox" checked class="fade-out-enabled"> 🌆 Fade Out
-            </label>
-            <input type="range" min="0" max="5" step="0.1" value="1.0" class="fade-out-slider">
-            <span class="fade-value">1.0s</span>
+        <!-- Loop Tab -->
+        <div class="tab-content" data-tab="loop">
+          <div class="control-row">
+            <div class="control-group full-width">
+              <label>🔄 Loop Mode</label>
+              <select class="loop-mode">
+                <option value="loop">Loop</option>
+                <option value="interval">Interval</option>
+                <option value="random-interval">Random Interval</option>
+                <option value="play-once">Play Once</option>
+              </select>
+              <div class="interval-settings" style="display:none;">
+                <div class="interval-input-container">
+                  <span class="interval-label">Sec:</span>
+                  <input type="number" min="1" max="300" value="30" class="interval-sec" aria-label="Seconds">
+                  <span class="random-interval-label" style="display:none;">Range:</span>
+                  <input type="number" min="1" max="300" value="15" class="min-interval-sec" aria-label="Min Seconds" style="display:none;">
+                  <span class="to-label" style="display:none;">to</span>
+                  <input type="number" min="1" max="300" value="45" class="max-interval-sec" aria-label="Max Seconds" style="display:none;">
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="control-row">
-          <div class="control-group full-width">
-            <label>🔄 Loop Mode</label>
-            <select class="loop-mode">
-              <option value="loop">Loop</option>
-              <option value="interval">Interval</option>
-              <option value="random-interval">Random Interval</option>
-              <option value="play-once">Play Once</option>
-            </select>
-            <div class="interval-settings" style="display:none;">
-              <div class="interval-input-container">
-                <span class="interval-label">Sec:</span>
-                <input type="number" min="1" max="300" value="30" class="interval-sec" aria-label="Seconds">
-                <span class="random-interval-label" style="display:none;">Range:</span>
-                <input type="number" min="1" max="300" value="15" class="min-interval-sec" aria-label="Min Seconds" style="display:none;">
-                <span class="to-label" style="display:none;">to</span>
-                <input type="number" min="1" max="300" value="45" class="max-interval-sec" aria-label="Max Seconds" style="display:none;">
-              </div>
+
+        <!-- Automation Tab -->
+        <div class="tab-content" data-tab="automation">
+          <div class="control-row">
+            <div class="control-group full-width">
+              <label>
+                <input type="checkbox" class="automation-enabled"> ⚡ Temporal Automation
+              </label>
+            </div>
+          </div>
+          <div class="control-row temporali-automatismi hidden">
+            <div class="control-group">
+              <label>📈 Volume Automation:</label>
+              <select class="volume-automation-type">
+                <option value="linear">Linear</option>
+                <option value="exponential">Exponential</option>
+                <option value="sinusoidal">Sinusoidal</option>
+              </select>
+              <br>
+              <label>Duration (s):</label>
+              <input type="number" min="1" max="300" value="10" class="volume-automation-duration">
+              <label>Start Vol:</label>
+              <input type="range" min="0" max="1" step="0.01" value="0.0" class="volume-automation-start">
+              <label>End Vol:</label>
+              <input type="range" min="0" max="1" step="0.01" value="0.8" class="volume-automation-end">
+              <br>
+              <label><input type="checkbox" class="volume-automation-cycle"> Cyclic</label>
+            </div>
+            <div class="control-group">
+              <label>
+                <input type="checkbox" class="pan-automation-enabled"> 🎛️ Pan Automation
+              </label>
+              <br>
+              <label>Duration (s):</label>
+              <input type="number" min="1" max="300" value="10" class="pan-automation-duration">
+              <label>Direction:</label>
+              <select class="pan-automation-direction">
+                <option value="left-right">Left → Right</option>
+                <option value="right-left">Right → Left</option>
+                <option value="bouncing">Bouncing</option>
+              </select>
+              <br>
+              <label><input type="checkbox" class="pan-automation-cycle"> Cyclic</label>
+            </div>
+            <div class="control-group">
+              <label>
+                <input type="checkbox" class="probabilistic-spawn-enabled"> 🎲 Probabilistic Spawn
+              </label>
+              <br>
+              <label>Min Interval (s):</label>
+              <input type="number" min="1" max="300" value="10" class="spawn-min-interval">
+              <label>Max Interval (s):</label>
+              <input type="number" min="1" max="300" value="30" class="spawn-max-interval">
+              <label>Probability:</label>
+              <input type="range" min="0.01" max="1" step="0.01" value="0.3" class="spawn-probability">
             </div>
           </div>
         </div>
@@ -206,18 +289,10 @@ export class UIManager {
     loopModeSelect.addEventListener('change', (e) => {
       track.loopMode = e.target.value;
       const intervalSettings = trackEl.querySelector('.interval-settings');
-      intervalSettings.style.display = (track.loopMode === 'interval' || track.loopMode === 'random-interval') ? 'inline' : 'none';
+      intervalSettings.style.display = (track.loopMode === 'interval' || track.loopMode === 'random-interval') ? 'block' : 'none';
 
       // Mostra/nasconde campi specifici
-      const isInterval = track.loopMode === 'interval';
-      const isRandomInterval = track.loopMode === 'random-interval';
-
-      intervalSecInput.style.display = isInterval ? 'inline' : 'none';
-      intervalLabel.style.display = isInterval ? 'inline' : 'none';
-      randomIntervalLabel.style.display = isRandomInterval ? 'inline' : 'none';
-      minIntervalSecInput.style.display = isRandomInterval ? 'inline' : 'none';
-      toLabel.style.display = isRandomInterval ? 'inline' : 'none';
-      maxIntervalSecInput.style.display = isRandomInterval ? 'inline' : 'none';
+      this.updateIntervalUI(trackEl, track.loopMode);
     });
 
     intervalSecInput.addEventListener('input', (e) => {
@@ -232,6 +307,105 @@ export class UIManager {
       track.maxIntervalSec = parseInt(e.target.value) || 45;
     });
 
+    // Event listeners per automatismi temporali
+    const automationEnabled = trackEl.querySelector('.automation-enabled');
+    const temporaliAutomatismiDiv = trackEl.querySelector('.temporali-automatismi');
+
+    automationEnabled.addEventListener('change', (e) => {
+      track.automationEnabled = e.target.checked;
+      temporaliAutomatismiDiv.classList.toggle('hidden', !e.target.checked);
+      // Hide/show volume slider based on automation state
+      const volumeSlider = trackEl.querySelector('.volume-slider');
+      volumeSlider.style.display = e.target.checked ? 'none' : 'inline-block';
+      if (track.source) {
+        // Apply immediately if playing
+        this.audioEngine.applyAutomationsToPlayingTrack(track);
+      }
+    });
+
+    // Volume automation
+    const volumeAutomationType = trackEl.querySelector('.volume-automation-type');
+    const volumeAutomationDuration = trackEl.querySelector('.volume-automation-duration');
+    const volumeAutomationStart = trackEl.querySelector('.volume-automation-start');
+    const volumeAutomationEnd = trackEl.querySelector('.volume-automation-end');
+
+    volumeAutomationType.addEventListener('change', (e) => {
+      track.volumeAutomation.type = e.target.value;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    volumeAutomationDuration.addEventListener('input', (e) => {
+      track.volumeAutomation.duration = parseInt(e.target.value) || 10;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    volumeAutomationStart.addEventListener('input', (e) => {
+      track.volumeAutomation.startVol = parseFloat(e.target.value);
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    volumeAutomationEnd.addEventListener('input', (e) => {
+      track.volumeAutomation.endVol = parseFloat(e.target.value);
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    const volumeAutomationCycle = trackEl.querySelector('.volume-automation-cycle');
+    volumeAutomationCycle.addEventListener('change', (e) => {
+      track.volumeAutomation.cycle = e.target.checked;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    // Pan automation
+    const panAutomationEnabled = trackEl.querySelector('.pan-automation-enabled');
+    const panAutomationDuration = trackEl.querySelector('.pan-automation-duration');
+    const panAutomationDirection = trackEl.querySelector('.pan-automation-direction');
+
+    panAutomationEnabled.addEventListener('change', (e) => {
+      track.panAutomation.enabled = e.target.checked;
+      // Hide/show pan slider based on pan automation state
+      const panSlider = trackEl.querySelector('.pan-slider');
+      panSlider.style.display = e.target.checked ? 'none' : 'inline-block';
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    panAutomationDuration.addEventListener('input', (e) => {
+      track.panAutomation.duration = parseInt(e.target.value) || 10;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    panAutomationDirection.addEventListener('change', (e) => {
+      track.panAutomation.direction = e.target.value;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    const panAutomationCycle = trackEl.querySelector('.pan-automation-cycle');
+    panAutomationCycle.addEventListener('change', (e) => {
+      track.panAutomation.cycle = e.target.checked;
+      if (track.source) this.audioEngine.applyAutomationsToPlayingTrack(track);
+    });
+
+    // Probabilistic spawn
+    const probabilisticSpawnEnabled = trackEl.querySelector('.probabilistic-spawn-enabled');
+    const spawnMinInterval = trackEl.querySelector('.spawn-min-interval');
+    const spawnMaxInterval = trackEl.querySelector('.spawn-max-interval');
+    const spawnProbability = trackEl.querySelector('.spawn-probability');
+
+    probabilisticSpawnEnabled.addEventListener('change', (e) => {
+      track.probabilisticSpawn.enabled = e.target.checked;
+    });
+
+    spawnMinInterval.addEventListener('input', (e) => {
+      track.probabilisticSpawn.minInterval = parseInt(e.target.value) || 10;
+    });
+
+    spawnMaxInterval.addEventListener('input', (e) => {
+      track.probabilisticSpawn.maxInterval = parseInt(e.target.value) || 30;
+    });
+
+    spawnProbability.addEventListener('input', (e) => {
+      track.probabilisticSpawn.spawnProbability = parseFloat(e.target.value);
+    });
+
     // Toggle advanced options
     const toggleBtn = trackEl.querySelector('.toggle-advanced');
     const advancedControls = trackEl.querySelector('.track-controls.advanced');
@@ -239,7 +413,28 @@ export class UIManager {
     toggleBtn.addEventListener('click', () => {
       const isHidden = advancedControls.classList.contains('hidden');
       advancedControls.classList.toggle('hidden', !isHidden);
-      toggleBtn.textContent = isHidden ? '⚙️ Hide Advanced' : '⚙️ Advanced';
+      toggleBtn.textContent = isHidden ? '⚙️ Hide Advanced' : '⚙️ Advanced Controls';
+    });
+
+    // Tab switching functionality
+    const tabButtons = trackEl.querySelectorAll('.tab-button');
+    const tabContents = trackEl.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const targetTab = e.target.dataset.tab;
+
+        // Remove active class from all tabs and contents
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        // Add active class to clicked tab and corresponding content
+        e.target.classList.add('active');
+        const targetContent = trackEl.querySelector(`.tab-content[data-tab="${targetTab}"]`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+      });
     });
 
     trackEl.querySelector('.remove-track').addEventListener('click', () => {
@@ -303,6 +498,68 @@ export class UIManager {
         intervalSettings.style.display = (track.loopMode === 'interval' || track.loopMode === 'random-interval') ? 'inline' : 'none';
       }
 
+      // Nuovo: Aggiorna automatismi temporali
+      const automationEnabled = trackEl.querySelector('.automation-enabled');
+      if (automationEnabled) {
+        automationEnabled.checked = track.automationEnabled || false;
+        const temporaliAutomatismiDiv = trackEl.querySelector('.temporali-automatismi');
+        if (temporaliAutomatismiDiv) {
+          temporaliAutomatismiDiv.classList.toggle('hidden', !(track.automationEnabled || false));
+        }
+        // Hide/show volume slider based on automation state
+        const volumeSlider = trackEl.querySelector('.volume-slider');
+        if (volumeSlider) volumeSlider.style.display = (track.automationEnabled || false) ? 'none' : 'inline-block';
+      }
+
+      if (track.volumeAutomation) {
+        const volumeAutomationType = trackEl.querySelector('.volume-automation-type');
+        const volumeAutomationDuration = trackEl.querySelector('.volume-automation-duration');
+        const volumeAutomationStart = trackEl.querySelector('.volume-automation-start');
+        const volumeAutomationEnd = trackEl.querySelector('.volume-automation-end');
+
+        if (volumeAutomationType) volumeAutomationType.value = track.volumeAutomation.type || 'linear';
+        if (volumeAutomationDuration) volumeAutomationDuration.value = track.volumeAutomation.duration || 10;
+        if (volumeAutomationStart) volumeAutomationStart.value = track.volumeAutomation.startVol || 0.0;
+        if (volumeAutomationEnd) volumeAutomationEnd.value = track.volumeAutomation.endVol || 0.8;
+      }
+
+      if (track.volumeAutomation && track.volumeAutomation.cycle !== undefined) {
+        const volumeAutomationCycle = trackEl.querySelector('.volume-automation-cycle');
+        if (volumeAutomationCycle) volumeAutomationCycle.checked = track.volumeAutomation.cycle;
+      }
+
+      if (track.panAutomation) {
+        const panAutomationEnabled = trackEl.querySelector('.pan-automation-enabled');
+        const panAutomationDuration = trackEl.querySelector('.pan-automation-duration');
+        const panAutomationDirection = trackEl.querySelector('.pan-automation-direction');
+
+        if (panAutomationEnabled) {
+          panAutomationEnabled.checked = track.panAutomation.enabled || false;
+          // Hide/show pan slider based on pan automation state
+          const panSlider = trackEl.querySelector('.pan-slider');
+          if (panSlider) panSlider.style.display = (track.panAutomation.enabled || false) ? 'none' : 'inline-block';
+        }
+        if (panAutomationDuration) panAutomationDuration.value = track.panAutomation.duration || 10;
+        if (panAutomationDirection) panAutomationDirection.value = track.panAutomation.direction || 'left-right';
+      }
+
+      if (track.panAutomation && track.panAutomation.cycle !== undefined) {
+        const panAutomationCycle = trackEl.querySelector('.pan-automation-cycle');
+        if (panAutomationCycle) panAutomationCycle.checked = track.panAutomation.cycle;
+      }
+
+      if (track.probabilisticSpawn) {
+        const probabilisticSpawnEnabled = trackEl.querySelector('.probabilistic-spawn-enabled');
+        const spawnMinInterval = trackEl.querySelector('.spawn-min-interval');
+        const spawnMaxInterval = trackEl.querySelector('.spawn-max-interval');
+        const spawnProbability = trackEl.querySelector('.spawn-probability');
+
+        if (probabilisticSpawnEnabled) probabilisticSpawnEnabled.checked = track.probabilisticSpawn.enabled || false;
+        if (spawnMinInterval) spawnMinInterval.value = track.probabilisticSpawn.minInterval || 10;
+        if (spawnMaxInterval) spawnMaxInterval.value = track.probabilisticSpawn.maxInterval || 30;
+        if (spawnProbability) spawnProbability.value = track.probabilisticSpawn.spawnProbability || 0.3;
+      }
+
       // Aggiorna display per loop mode
       this.updateIntervalUI(trackEl, track.loopMode);
     }
@@ -321,12 +578,149 @@ export class UIManager {
     const isInterval = loopMode === 'interval';
     const isRandomInterval = loopMode === 'random-interval';
 
-    intervalSecInput.style.display = isInterval ? 'inline' : 'none';
-    intervalLabel.style.display = isInterval ? 'inline' : 'none';
-    randomIntervalLabel.style.display = isRandomInterval ? 'inline' : 'none';
-    minIntervalSecInput.style.display = isRandomInterval ? 'inline' : 'none';
-    toLabel.style.display = isRandomInterval ? 'inline' : 'none';
-    maxIntervalSecInput.style.display = isRandomInterval ? 'inline' : 'none';
+    // Usa display flexbox per disposizione orizzontale appropriata
+    const flexDisplay = 'inline-flex';
+    const hideDisplay = 'none';
+
+    intervalSecInput.style.display = isInterval ? flexDisplay : hideDisplay;
+    intervalLabel.style.display = isInterval ? flexDisplay : hideDisplay;
+    randomIntervalLabel.style.display = isRandomInterval ? flexDisplay : hideDisplay;
+    minIntervalSecInput.style.display = isRandomInterval ? flexDisplay : hideDisplay;
+    toLabel.style.display = isRandomInterval ? flexDisplay : hideDisplay;
+    maxIntervalSecInput.style.display = isRandomInterval ? flexDisplay : hideDisplay;
+  }
+
+  // Get current automated volume value
+  getCurrentAutomatedVolume(track) {
+    if (!track.automationEnabled || !track.volumeAutomationStartTime) {
+      return track.gainNode ? track.gainNode.gain.value : track.volume;
+    }
+
+    const auto = track.volumeAutomation;
+    const ctx = this.audioEngine.getAudioContext();
+    const elapsed = ctx.currentTime - track.volumeAutomationStartTime;
+    const progress = Math.min(elapsed / auto.duration, 1.0); // Cap at 1.0 for finished automation
+
+    if (auto.type === 'linear') {
+      return auto.startVol + progress * (auto.endVol - auto.startVol);
+    } else if (auto.type === 'exponential') {
+      const startVol = Math.max(auto.startVol, 0.01);
+      const endVol = Math.max(auto.endVol, 0.01);
+      const ratio = endVol / startVol;
+      return startVol * Math.pow(ratio, progress);
+    } else if (auto.type === 'sinusoidal') {
+      const sinVal = Math.sin(2 * Math.PI * progress - Math.PI / 2);
+      const normalized = (sinVal + 1) / 2; // 0 to 1
+      return auto.startVol + (auto.endVol - auto.startVol) * normalized;
+    }
+
+    return track.volume;
+  }
+
+  // Get current automated pan value
+  getCurrentAutomatedPan(track) {
+    if (!track.panAutomation.enabled || !track.panAutomationStartTime) {
+      return track.pannerNode ? track.pannerNode.pan.value : track.pan;
+    }
+
+    const auto = track.panAutomation;
+    const ctx = this.audioEngine.getAudioContext();
+    const elapsed = ctx.currentTime - track.panAutomationStartTime;
+    const progress = Math.min(elapsed / auto.duration, 1.0);
+
+    if (auto.direction === 'left-right') {
+      return -1 + progress * 2; // from -1 to 1
+    } else if (auto.direction === 'right-left') {
+      return 1 - progress * 2; // from 1 to -1
+    } else if (auto.direction === 'bouncing') {
+      // For bouncing, calculate the position based on bouncing pattern
+      const steps = 10;
+      const stepProgress = (elapsed % (auto.duration / steps)) / (auto.duration / steps);
+      const currentStep = Math.floor((elapsed / auto.duration) * steps) % steps;
+      const start = currentStep % 2 === 0 ? -1 : 1;
+      const end = currentStep % 2 === 0 ? 1 : -1;
+      return start + stepProgress * (end - start);
+    }
+
+    return track.pan;
+  }
+
+  // Update sliders and visual indicators to reflect current automated values every frame
+  updatePlayingTrackSliders() {
+    const tracks = this.mixerController.getTracks();
+    tracks.forEach(track => {
+      const trackEl = document.querySelector(`[data-path="${track.soundPath}"]`);
+      if (!trackEl) return;
+
+      // Update track status classes
+      this.updateTrackStatus(trackEl, track);
+
+      // Update sliders for automation feedback
+      if (track.source) {
+        const volumeSlider = trackEl.querySelector('.volume-slider');
+        if (volumeSlider) {
+          const currentVol = this.getCurrentAutomatedVolume(track);
+          volumeSlider.value = currentVol;
+        }
+        const panSlider = trackEl.querySelector('.pan-slider');
+        if (panSlider) {
+          const currentPan = this.getCurrentAutomatedPan(track);
+          panSlider.value = currentPan;
+        }
+      }
+
+      // Update audio level indicator
+      this.updateAudioLevelIndicator(trackEl, track);
+    });
+  }
+
+  // Update visual track status indicators
+  updateTrackStatus(trackEl, track) {
+    // Remove existing status classes
+    trackEl.classList.remove('playing', 'loading', 'error', 'automation-active');
+
+    // Add appropriate status classes
+    if (track.source) {
+      trackEl.classList.add('playing');
+    }
+    if (track.isLoading) {
+      trackEl.classList.add('loading');
+    }
+    if (track.automationEnabled) {
+      trackEl.classList.add('automation-active');
+    }
+  }
+
+  // Update real-time audio level visualization
+  updateAudioLevelIndicator(trackEl, track) {
+    const volumeFill = trackEl.querySelector('.volume-fill');
+    if (!volumeFill) return;
+
+    let level = 0;
+
+    if (track.source && track.gainNode) {
+      // For playing tracks, show current volume level
+      if (track.automationEnabled) {
+        level = this.getCurrentAutomatedVolume(track);
+      } else {
+        level = track.gainNode.gain.value;
+      }
+    } else if (track.isLoading) {
+      // Show loading animation
+      level = Math.sin(Date.now() * 0.01) * 0.3 + 0.5; // Pulsing effect
+    }
+
+    // Smooth animation with CSS transition
+    volumeFill.style.width = `${Math.max(0, Math.min(100, level * 100))}%`;
+
+    // Color based on level (green to red)
+    if (level > 0.8) {
+      volumeFill.style.background = 'linear-gradient(90deg, var(--success-color), var(--warning-color), var(--error-color))';
+    } else if (level > 0.6) {
+      volumeFill.style.background = 'linear-gradient(90deg, var(--success-color), var(--warning-color))';
+    } else {
+      volumeFill.style.background = 'var(--success-color)';
+    }
   }
 
   // Apply search filter to categories and sounds

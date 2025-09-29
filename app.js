@@ -5,152 +5,215 @@ import { UIManager } from './logic/uiManager.js';
 import { MixerController } from './logic/mixerController.js';
 import { StorageManager } from './logic/storageManager.js';
 
-// Inizializza componenti
-const audioEngine = new AudioEngine();
-const mixerController = new MixerController(audioEngine);
-const uiManager = new UIManager(audioEngine, mixerController);
-const storageManager = new StorageManager(mixerController, uiManager);
+// Splash screen management
+const splashScreen = document.getElementById('splash-screen');
+const loaderFill = splashScreen.querySelector('.loader-fill');
 
-// Inizializza interfaccia
-uiManager.initCategories();
-storageManager.updateSavedMixes();
-
-// Modal functionality
-function showModal(modalId) {
-  document.getElementById(modalId).classList.add('show');
+// Show splash screen initially
+function showSplash() {
+  splashScreen.classList.remove('hide');
+  loaderFill.style.width = '10%';
 }
 
-function hideModal(modalId) {
-  document.getElementById(modalId).classList.remove('show');
+// Hide splash screen with animation
+function hideSplash() {
+  setTimeout(() => {
+    splashScreen.classList.add('hide');
+  }, 500);
 }
 
-function hideAllModals() {
-  document.querySelectorAll('.modal').forEach(modal => {
-    modal.classList.remove('show');
-  });
-}
+// Simulate loading progress
+function updateLoader(progress) {
+  const percentage = Math.min(100, Math.max(0, progress));
+  loaderFill.style.width = `${percentage}%`;
 
-// Close modals when clicking on backdrop or close button
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close')) {
-    hideAllModals();
-  }
-});
-
-// Close modals on Escape key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') {
-    hideAllModals();
-  }
-});
-
-// Funzione per aggiornare lo stato del bottone Play/Stop
-function updatePlayStopButton() {
-  const button = document.getElementById('play-stop');
-  if (mixerController.isPlaying) {
-    button.innerHTML = '⏹️ Stop Mix';
-    button.title = 'Stop Mix';
-  } else {
-    button.innerHTML = '▶️ Play Mix';
-    button.title = 'Play Mix';
+  if (percentage >= 100) {
+    setTimeout(hideSplash, 800);
   }
 }
 
-// Event listener per il bottone unificato Play/Stop
-document.getElementById('play-stop').addEventListener('click', async () => {
+// Initialize app with progress updates
+async function initializeApp() {
+  showSplash();
+
   try {
-    if (!mixerController.isPlaying) {
-      console.log('Play button clicked');
-      // Assicura che AudioContext sia attivo prima di riprodurre
-      await audioEngine.ensureAudioContext();
-      console.log('AudioContext ensured, calling playAll');
-      mixerController.playAll();
-    } else {
-      console.log('Stop button clicked');
-      mixerController.stopAll();
-    }
-    updatePlayStopButton();
-  } catch (error) {
-    console.error('Errore gestione riproduzione:', error);
-    // Provide user feedback about the error
-    alert('Errore nella riproduzione audio. Controlla la console per dettagli.');
-  }
-});
+    // Step 1: Initialize components (20%)
+    const audioEngine = new AudioEngine();
+    const mixerController = new MixerController(audioEngine);
+    const uiManager = new UIManager(audioEngine, mixerController);
+    updateLoader(30);
 
-// Inizializza lo stato del bottone
-updatePlayStopButton();
+    // Step 2: Initialize UI categories (50%)
+    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay for visible progress
+    uiManager.initCategories();
+    updateLoader(60);
 
-// Toolbar button event listeners
-document.getElementById('save-mix-btn').addEventListener('click', () => {
-  showModal('save-modal');
-});
-
-document.getElementById('load-mix-btn').addEventListener('click', () => {
-  storageManager.updateSavedMixes();
-  showModal('load-modal');
-});
-
-// Salva mix
-document.getElementById('save-mix').addEventListener('click', () => {
-  const name = document.getElementById('mix-name').value.trim();
-  if (!name) return alert('Nome mix necessario.');
-  if (storageManager.saveMix(name)) {
-    document.getElementById('mix-name').value = '';
+    // Step 3: Initialize storage and background system (80%)
+    const storageManager = new StorageManager(mixerController, uiManager);
     storageManager.updateSavedMixes();
-    hideModal('save-modal'); // Close modal after successful save
-  } else {
-    alert('Errore salvataggio mix. Aggiungi suoni.');
+    initBackgroundSystem();
+    updateLoader(90);
+
+    // Step 4: Final setup (100%)
+    await new Promise(resolve => setTimeout(resolve, 200));
+    updateLoader(100);
+
+    return { audioEngine, mixerController, uiManager, storageManager };
+  } catch (error) {
+    console.error('Error during app initialization:', error);
+    loaderFill.style.background = 'var(--error-color)';
+    splashScreen.querySelector('.loading-text').textContent = 'Error loading app';
+    return null;
   }
-});
-
-// Carica mix
-document.getElementById('load-mix').addEventListener('click', () => {
-  const name = document.getElementById('saved-mixes').value;
-  if (!name) return;
-  storageManager.loadMix(name);
-  hideModal('load-modal'); // Close modal after loading
-});
-
-// Cancella mix
-document.getElementById('delete-mix').addEventListener('click', () => {
-  const name = document.getElementById('saved-mixes').value;
-  if (!name) return;
-  storageManager.deleteMix(name);
-  storageManager.updateSavedMixes();
-});
-
-// Event listener per aggiungere suoni categorie
-const categoriesEl = document.getElementById('categories');
-categoriesEl.addEventListener('click', (e) => {
-  if (e.target.classList.contains('add-sound')) {
-    const path = e.target.dataset.path;
-    console.log('Click suono:', path); // Debug
-    uiManager.addToMixer(path);
-  }
-});
-
-// Tema gestione
-const themeToggle = document.getElementById('theme-toggle');
-const currentTheme = localStorage.getItem('theme') || 'light';
-
-function updateThemeButton(theme) {
-  // Use consistent, intuitive icons: sun for light theme, moon for dark theme
-  themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
-  themeToggle.title = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
 }
 
-function setTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('theme', theme);
-  updateThemeButton(theme);
-}
+// Initialize the app with proper async scoping
+(async () => {
+  const appComponents = await initializeApp();
+  if (!appComponents) {
+    // Handle initialization failure
+    return;
+  }
 
-setTheme(currentTheme);
+  const { audioEngine, mixerController, uiManager, storageManager } = appComponents;
 
-themeToggle.addEventListener('click', () => {
-  const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  setTheme(newTheme);
-});
+  // Modal functionality
+  function showModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+  }
+
+  function hideModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+  }
+
+  function hideAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.classList.remove('show');
+    });
+  }
+
+  // Close modals when clicking on backdrop or close button
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop') || e.target.classList.contains('modal-close')) {
+      hideAllModals();
+    }
+  });
+
+  // Close modals on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      hideAllModals();
+    }
+  });
+
+  // Funzione per aggiornare lo stato del bottone Play/Stop
+  function updatePlayStopButton() {
+    const button = document.getElementById('play-stop');
+    if (mixerController.isPlaying) {
+      button.innerHTML = '⏹️ Stop Mix';
+      button.title = 'Stop Mix';
+    } else {
+      button.innerHTML = '▶️ Play Mix';
+      button.title = 'Play Mix';
+    }
+  }
+
+  // Event listener per il bottone unificato Play/Stop
+  document.getElementById('play-stop').addEventListener('click', async () => {
+    try {
+      if (!mixerController.isPlaying) {
+        console.log('Play button clicked');
+        // Assicura che AudioContext sia attivo prima di riprodurre
+        await audioEngine.ensureAudioContext();
+        console.log('AudioContext ensured, calling playAll');
+        mixerController.playAll();
+      } else {
+        console.log('Stop button clicked');
+        mixerController.stopAll();
+      }
+      updatePlayStopButton();
+    } catch (error) {
+      console.error('Errore gestione riproduzione:', error);
+      // Provide user feedback about the error
+      alert('Errore nella riproduzione audio. Controlla la console per dettagli.');
+    }
+  });
+
+  // Inizializza lo stato del bottone
+  updatePlayStopButton();
+
+  // Toolbar button event listeners
+  document.getElementById('save-mix-btn').addEventListener('click', () => {
+    showModal('save-modal');
+  });
+
+  document.getElementById('load-mix-btn').addEventListener('click', () => {
+    storageManager.updateSavedMixes();
+    showModal('load-modal');
+  });
+
+  // Salva mix
+  document.getElementById('save-mix').addEventListener('click', () => {
+    const name = document.getElementById('mix-name').value.trim();
+    if (!name) return alert('Nome mix necessario.');
+    if (storageManager.saveMix(name)) {
+      document.getElementById('mix-name').value = '';
+      storageManager.updateSavedMixes();
+      hideModal('save-modal'); // Close modal after successful save
+    } else {
+      alert('Errore salvataggio mix. Aggiungi suoni.');
+    }
+  });
+
+  // Carica mix
+  document.getElementById('load-mix').addEventListener('click', () => {
+    const name = document.getElementById('saved-mixes').value;
+    if (!name) return;
+    storageManager.loadMix(name);
+    hideModal('load-modal'); // Close modal after loading
+  });
+
+  // Cancella mix
+  document.getElementById('delete-mix').addEventListener('click', () => {
+    const name = document.getElementById('saved-mixes').value;
+    if (!name) return;
+    storageManager.deleteMix(name);
+    storageManager.updateSavedMixes();
+  });
+
+  // Event listener per aggiungere suoni categorie
+  const categoriesEl = document.getElementById('categories');
+  categoriesEl.addEventListener('click', (e) => {
+    if (e.target.classList.contains('add-sound')) {
+      const path = e.target.dataset.path;
+      console.log('Click suono:', path); // Debug
+      uiManager.addToMixer(path);
+    }
+  });
+
+  // Tema gestione
+  const themeToggle = document.getElementById('theme-toggle');
+  const currentTheme = localStorage.getItem('theme') || 'light';
+
+  function updateThemeButton(theme) {
+    // Use consistent, intuitive icons: sun for light theme, moon for dark theme
+    themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    themeToggle.title = theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    updateThemeButton(theme);
+  }
+
+  setTheme(currentTheme);
+
+  themeToggle.addEventListener('click', () => {
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  });
+})();
 
 // Caricamento automatico mix disabilitato
 // Per evitare che suoni partano automaticamente al refresh della pagina
@@ -583,9 +646,6 @@ function initBackgroundSystem() {
     currentBackground = null;
   });
 }
-
-// Inizializza all'avvio app
-initBackgroundSystem();
 
 // Funzione helper per trovare un mix valido
 function findFirstValidMix() {
